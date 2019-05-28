@@ -1,0 +1,40 @@
+version: '3'
+services:
+
+  curator:
+    container_name: curator-db
+    restart: always
+    image: curator-db
+    build:
+      context: ./db
+    volumes:
+      - curator-volume:/var/lib/postgresql/data
+    env_file:
+      - ./.env
+    ports:
+      - 5432:5432
+    networks:
+      - default
+
+  graphql:
+    container_name: graphql
+    restart: always
+    image: graphile/postgraphile
+    env_file:
+      - ./.env
+    depends_on:
+      - curator
+    networks:
+      - default
+    ports:
+      - 5433:5433
+    command: ["postgraphile", "--connection", "${DATABASE_URL}", "--port", "5433", "--schema", "curator_schema"]
+
+networks:
+  default:
+    external:
+      name: my-network
+
+volumes:
+  curator-volume:
+    external: true
